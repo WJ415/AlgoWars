@@ -1,0 +1,50 @@
+//@version=6
+// =============================
+// AlgoWars 固定框架（不要改动除“用户策略区”之外的任何代码）
+// =============================
+strategy("AlgoWars 2025", 
+     overlay=false,           // 固定：副图
+     pyramiding=0,            // 固定：禁止同向加仓
+     initial_capital=100000,  // 固定：初始资金 100k USD
+     currency=currency.USD,   // 固定：USD 计价
+     slippage=1,              // 固定：1 tick 滑点
+     process_orders_on_close=true)  // 固定：收盘撮合；不要改
+
+// —— 固定：统一用 UTC 起始时间（限制“入场”的开始时点）——
+startT = timestamp(2000, 1, 1, 0, 0)
+endT = timestamp(2025, 11, 1, 0, 0)
+inRange = time >= startT and time <= endT  // 注意：time 为 UTC 毫秒时间戳
+
+
+
+// =====================================================
+// =============== 用户策略区（只改这里） ===============
+
+
+
+
+
+
+// ============= 用户策略区结束（以上可改） =============
+// =====================================================
+
+
+
+// —— 固定：可视化（总资产USD + 最大回撤USD），不要改 —— 
+eq = inRange ? strategy.equity : na
+
+var float peak  = na
+var float maxDD = na
+
+if inRange
+    // 维护峰值与最大回撤（USD，≤0）
+    peak  := na(peak) ? eq : math.max(peak, eq)
+    currDD = eq - peak
+    maxDD := na(maxDD) ? currDD : math.min(maxDD, currDD)
+else
+    peak  := na
+    maxDD := na
+
+plot(eq,       "Equity (USD)",        format=format.price, linewidth=2)
+plot(maxDD,    "Max Drawdown (USD)",  format=format.price, linewidth=2)
+hline(100000,  "Initial 100k",        linestyle=hline.style_dotted)
