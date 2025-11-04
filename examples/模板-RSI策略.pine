@@ -1,0 +1,90 @@
+//@version=6
+// =============================
+// AlgoWars 固定框架（不要改动除“用户策略区”之外的任何代码）
+// =============================
+strategy("模板-RSI策略", 
+     overlay=false,           // 固定：副图
+     pyramiding=0,            // 固定：禁止同向加仓
+     initial_capital=100000,  // 固定：初始资金 100k USD
+     currency=currency.USD,   // 固定：USD 计价
+     slippage=1,              // 固定：1 tick 滑点
+     process_orders_on_close=true)  // 固定：收盘撮合；不要改
+
+// —— 固定：统一用 UTC 起始时间（限制“入场”的开始时点）——
+startT = timestamp(2000, 1, 1, 0, 0)
+endT = timestamp(2025, 11, 1, 0, 0)
+inRange = time >= startT and time <= endT  // 注意：time 为 UTC 毫秒时间戳
+
+
+
+// =====================================================
+// =============== 用户策略区（只改这里） ===============
+
+// 策略名称：RSI 均值回归策略（RSI Mean Reversion）
+// 策略逻辑简介：
+//     RSI（相对强弱指数）用于衡量价格在一段时间内的超买超卖程度。
+//     当 RSI 过低（低于超卖线）后再次上穿 → 认为价格可能反弹 → 开多；
+//     当 RSI 过高（高于超买线）后再次下穿 → 认为价格可能回落 → 开空；
+//     当 RSI 回到 50 附近（中性区间）时平仓，视为均值回归完成。
+
+// —— RSI 均值回归策略 ——
+// 参数
+len = input.int(14, 'RSI Length')
+ob  = input.int(70, 'Overbought')
+os  = input.int(30, 'Oversold')
+
+// 指标
+r = ta.rsi(close, len)
+
+// 可视化（副图）
+// plot(r, 'RSI')
+// hline(ob)
+// hline(os)
+// hline(50)
+
+// 进出场条件（遵循框架 inRange + barstate.isconfirmed）
+longEnter  = inRange and ta.crossover(r, os)  and barstate.isconfirmed   // RSI 自下穿越超卖 → 做多
+shortEnter = inRange and ta.crossunder(r, ob) and barstate.isconfirmed   // RSI 自上跌破超买 → 做空
+longExit   = inRange and ta.crossunder(r, 50) and barstate.isconfirmed   // RSI 下穿 50 → 平多
+shortExit  = inRange and ta.crossover(r, 50)  and barstate.isconfirmed   // RSI 上穿 50 → 平空
+
+// 下单与互斥（保持与框架示例一致，先平反向）
+if longEnter and strategy.position_size <= 0
+    if strategy.position_size < 0
+        strategy.close("S")
+    strategy.entry("L", strategy.long)
+
+if shortEnter and strategy.position_size >= 0
+    if strategy.position_size > 0
+        strategy.close("L")
+    strategy.entry("S", strategy.short)
+
+if longExit and strategy.position_size > 0
+    strategy.close("L")
+
+if shortExit and strategy.position_size < 0
+    strategy.close("S")
+
+// ============= 用户策略区结束（以上可改） =============
+// =====================================================
+
+
+
+// —— 固定：可视化（总资产USD + 最大回撤USD），不要改 —— 
+eq = inRange ? strategy.equity : na
+
+var float peak  = na
+var float maxDD = na
+
+if inRange
+    // 维护峰值与最大回撤（USD，≤0）
+    peak  := na(peak) ? eq : math.max(peak, eq)
+    currDD = eq - peak
+    maxDD := na(maxDD) ? currDD : math.min(maxDD, currDD)
+else
+    peak  := na
+    maxDD := na
+
+plot(eq,       "Equity (USD)",        format=format.price, linewidth=2)
+plot(maxDD,    "Max Drawdown (USD)",  format=format.price, linewidth=2)
+hline(100000,  "Initial 100k",        linestyle=hline.style_dotted)
