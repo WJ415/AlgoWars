@@ -1,0 +1,37 @@
+Pine Script 常用函数清单
+-------------------------
+策略与下单：
+- strategy.entry(), strategy.exit(), strategy.close()
+- strategy.position_size, strategy.equity
+
+时间与会话：
+- time, time_close, timestamp(), input.session()
+- barstate.isconfirmed
+
+跨周期：
+- request.security(symbol, timeframe, expression)
+
+技术指标：
+- ta.sma(), ta.ema(), ta.macd(), ta.rsi(), ta.atr(), ta.stdev()
+- ta.crossover(), ta.crossunder()
+
+数学与处理：
+- math.max(), math.min(), math.abs(), nz(), na(), bool(), float(), int()
+
+绘图与参数：
+- plot(), plotshape(), hline(), input.*()
+
+符号信息：
+- syminfo.tickerid, syminfo.currency, syminfo.mintick
+
+
+推荐学习网站
+-------------------------
+- TradingView 官方 Pine Script 语言手册
+  https://www.tradingview.com/pine-script-reference/v6/
+
+- Pine Script 用户指南
+  https://www.tradingview.com/pine-script-docs/primer/
+
+- Pine Script Resources（第三方教程与速查）
+  https://pinescriptstrategy.com/pine-script-resources/
